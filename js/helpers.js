@@ -7,7 +7,7 @@ export function listen(target, type, callback, capture) {
 	target.addEventListener(type, callback, !!capture);
 }
 
-export function delegateEvent(target, selector, type, handler, capture) {
+export function delegateEvent(target, selector, type, handler, capture) { // מקשיבה לכל האיבנטים ומחליטה מה לעשות לפי האלמנטים הסלקטרוים הסוגים שהוכנו מראש
 	const dispatchEvent = event => {
 		const targetElement = event.target;
 		const potentialElements = target.querySelectorAll(selector);

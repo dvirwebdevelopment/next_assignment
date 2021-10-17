@@ -35,8 +35,55 @@ export default class View {
   }
 
   showItems(items) {
-    this.$todoList.innerHTML = this.template.itemList(items);
+    //this.$todoList.innerHTML = this.template.itemList(items);
+    this.getDataFromServer()
   }
+
+
+  getDataFromServer(){
+    let todos = JSON.parse(localStorage['todos-vanilla-es6'] || '[]')
+    let tempThis = this;
+		fetch('https://jsonplaceholder.typicode.com/todos')
+		.then(response => response.body)
+		.then(rb => {
+		  const reader = rb.getReader();
+		
+		  return new ReadableStream({
+			start(controller) {
+			  // The following function handles each data chunk
+			  function push() {
+				// "done" is a Boolean and value a "Uint8Array"
+				reader.read().then( ({done, value}) => {
+				  // If there is no more data to read
+				  if (done) {
+					controller.close();
+					return;
+				  }
+				  controller.enqueue(value);
+				  push();
+				})
+			  }
+			  push();
+			}
+		  });
+		})
+		.then(stream => {
+		  return new Response(stream, { headers: { "Content-Type": "application/json", "Accept": "application/json" } }).text();
+		})
+		.then(result => {
+           let jsonResult = JSON.parse(result) 
+          //  jsonResult.push(todos)
+          //  console.log(typeof jsonResult, "jsonResult")
+          //  console.log(typeof items, "items")
+
+          // items.push(jsonResult);
+           //console.log(jsonResult)
+      tempThis.$todoList.innerHTML = this.template.itemList(jsonResult);
+		});
+
+
+	}
+
 
   removeItem(id) {
     const elem = query(`[data-id="${id}"]`);
@@ -63,7 +110,7 @@ export default class View {
   }
 
   updateFilterButtons(route) {
-    query('.filters .selected', null).className = '';
+    query('.filters .selected').className = '';
     query(`.filters [href="#/${route}"]`).className = 'selected';
   }
 
@@ -137,7 +184,7 @@ export default class View {
 
   bindEditItemCancel(handler) {
     delegateEvent(this.$todoList, 'li .edit', 'keyup', ({ target, keyCode }) => {
-      if (keyCode === ESCAPE_KEY) {
+      if (keyCode === ESCAPE_KEY || keyCode === 13) {
         target.dataset.iscanceled = true;
         target.blur();
 
